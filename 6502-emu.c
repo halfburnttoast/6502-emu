@@ -4,9 +4,11 @@
 #include <termios.h>
 #include <time.h>
 
+#include "6502-emu.h"
 #include "6502.h"
 #include "6850.h"
 
+int g_force_uppercase = 0;
 struct termios initial_termios;
 
 void step_delay()
@@ -70,6 +72,7 @@ int hextoint(char *str) {
 void usage(char *argv[]) {
 	fprintf(stderr, "Usage: %s [OPTIONS] FILE\n"
 		"Simulate a NMOS 6502 processor\n"
+        "!!! Modified to support some 65c02 instructions !!!\n"
 		"\nOPTIONS:\n"
 		"\n  CPU Initialization (specify all values in hex; $nn, 0xNN, etc.)\n"
 		"	-a HEX	set A register (default 0)\n"
@@ -84,6 +87,8 @@ void usage(char *argv[]) {
 		"	-b ADDR	stop when PC reaches this address, write memory dump, and exit\n"
 		"	-c NUM	exit after number of cycles (default: never)\n"
 		"	-f	run as fast as possible; no delay loop\n"
+        "\t-u\tforce uppercase character input\n"
+        "\t-z\tbreak whenever PC == 0x0000\n"
 		"\n  Memory Initialization\n"
 		"	-l ADDR	load address for ROM file (default $c000)\n"
 		"	FILE	binary file to load\n"
@@ -96,6 +101,7 @@ int main(int argc, char *argv[])
 	int verbose, interactive, mem_dump, break_pc, fast;
 	long cycles;
 	int opt;
+    g_force_uppercase = 0;
 
 	verbose = 0;
 	interactive = 0;
@@ -110,7 +116,7 @@ int main(int argc, char *argv[])
 	sp = 0xFF;
 	sr = 0;
 	pc = -RST_VEC;  // negative implies indirect
-	while ((opt = getopt(argc, argv, "hvimfa:b:x:y:r:p:s:g:c:l:")) != -1) {
+	while ((opt = getopt(argc, argv, "uhvimfa:z:b:x:y:r:p:s:g:c:l:")) != -1) {
 		switch (opt) {
 		case 'v':
 			verbose = 1;
@@ -146,12 +152,18 @@ int main(int argc, char *argv[])
 		case 'g':
 			pc = hextoint(optarg);
 			break;
+        case 'z':
+            break_pc = 0;
+            break;
 		case 'c':
 			cycles = atol(optarg);
 			break;
 		case 'l':
 			load_addr = hextoint(optarg);
 			break;
+        case 'u':
+            g_force_uppercase = 1;
+            break;
 		case 'h':
 		default: /* '?' */
 			usage(argv);

@@ -1,7 +1,12 @@
 #include <stdbool.h>
 
-#define CTRL_ADDR 0xA000
-#define DATA_ADDR 0xA001
+//#define CTRL_ADDR 0xA000
+#define CTRL_ADDR 0x8005
+//#define DATA_ADDR 0xA001
+#define DATA_ADDR 0x8001
+#define READ_ADDR 0x8002
+#define RAND_ADDR 0x8003
+#define IO_ADDR 0x8004
 
 struct UartStatusBits{
 	bool RDRF:1; // bit 0
